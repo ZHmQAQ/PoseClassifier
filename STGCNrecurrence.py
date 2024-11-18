@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from data_feeder import TrainFeeder, ValFeeder
+from data_feeder import TrainFeeder, InferFeeder
 from datapro import combined_transform
 
 print("Use CUDA:", torch.cuda.is_available())
@@ -454,19 +454,19 @@ def my_inference():
     """
 
     model_path = "best_model.pth"
-    data_path = "keypoints_data.npy"
+    data_path = r"data\val_data.npy"
 
     # Load the model
-    model = ST_GCN(num_classes=4, in_channels=2, t_kernel_size=9, hop_size=1)
+    model = ST_GCN(num_classes=14, in_channels=2, t_kernel_size=9, hop_size=1)
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
     # Prepare the data loader
-    dataset = Feeder(data_path, label_path=None)
+    dataset = InferFeeder(data_path, 'npy')
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
 
     # Inference
-    for data, labels in data_loader:
+    for data in data_loader:
         data = data.float()  # Ensure data is in float
         with torch.no_grad():
             outputs = model(data)
@@ -483,11 +483,11 @@ def my_inference():
                     print(f"  Class {idx}: {prob.item():.4f}")
 
 
-def recognize_actions_and_scores_in_video(model, video_path):
+def recognize_actions_and_scores_in_video(model, data_path, data_type='npy'):
     # 加载和预处理视频数据
     import time
 
-    dataset = Feeder(video_path, label_path=None)
+    dataset = Feeder(data_path, data_type)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
 
     start_time = time.time()
@@ -507,4 +507,5 @@ def recognize_actions_and_scores_in_video(model, video_path):
 
 
 if __name__ == "__main__":
-    my_train_with_cross_validation()
+    # my_train_with_cross_validation()
+    my_inference()

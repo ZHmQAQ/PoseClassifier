@@ -31,21 +31,17 @@ class TrainFeeder(Dataset):
         return data, label
 
 
-class ValFeeder(Dataset):
-    def __init__(self, data_path, label_path=None, data_type="npy"):
-        super(ValFeeder, self).__init__()
+class InferFeeder(Dataset):
+    def __init__(self, data_path, data_type="npy"):
+        super(InferFeeder, self).__init__()
         if data_type == "npy":
             self.data = np.load(data_path)
-            self.labels = np.load(label_path) if label_path else None
         elif data_type == "vid":
             self.data = RTM_Pose_Tran(data_path)
-            self.labels = np.load(label_path) if label_path else None
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, index):
         data = self.data[index]
-        label = self.labels[index] if self.labels is not None else None
-        # Return data and label if available, or just data if no labels
-        return (data, label) if label is not None else data
+        return data
