@@ -5,32 +5,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from data_feeder import TrainFeeder, InferFeeder
 from datapro import combined_transform
+from pathlib import Path
 
 print("Use CUDA:", torch.cuda.is_available())
 print("torch version:", torch.__version__)
-
-
-# 用于读取数据的函数
-class Feeder(torch.utils.data.Dataset):
-    def __init__(self, data_path, label_path=None):
-        super().__init__()
-        self.data = np.load(data_path).astype(np.float32)
-        # 只有在提供了标签路径时才加载标签
-        if label_path is not None:
-            self.labels = np.load(label_path).astype(np.int64)
-        else:
-            self.labels = None
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, index):
-        data = self.data[index]
-        if self.labels is not None:
-            label = self.labels[index]
-            return data, label
-        else:
-            return data
 
 
 class Graph:
@@ -244,93 +222,20 @@ torch.backends.cudnn.deterministic = True
 torch.use_deterministic_algorithms = True
 
 
-def my_train():
-    NUM_EPOCH = 300
-    BATCH_SIZE = 128
-    acc_list = []
-    best_acc = 0
-    best_model_path = "best_model.pth"  # 最好模型的保存路径
-    final_model_path = "final_model.pth"  # 训练结束后最终模型的保存路径
-
-    # 实例化模型
-    model = ST_GCN(
-        num_classes=4,
-        in_channels=2,  # 二维
-        t_kernel_size=9,  # 时间图卷积的内核大小(t_kernel_size × 1)
-        hop_size=1,
-    ).cuda()
-
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-    criterion = torch.nn.CrossEntropyLoss()
-
-    # 数据集的准备
-    data_loader = dict()
-    data_loader["train"] = torch.utils.data.DataLoader(
-        dataset=Feeder(
-            data_path="data/train_data.npy", label_path="data/train_label.npy"
-        ),
-        batch_size=BATCH_SIZE,
-        shuffle=True,
-    )
-    data_loader["test"] = torch.utils.data.DataLoader(
-        dataset=Feeder(
-            data_path="data/test_data.npy", label_path="data/test_label.npy"
-        ),
-        batch_size=BATCH_SIZE,
-        shuffle=False,
-    )
-
-    # 将模型转变为学习模式
-    model.train()
-
-    # 开始训练
-    for epoch in range(1, NUM_EPOCH + 1):
-        correct = 0
-        sum_loss = 0
-        for batch_idx, (data, label) in enumerate(data_loader["train"]):
-            data = data.cuda()
-            label = label.cuda()
-
-            output = model(data)
-
-            loss = criterion(output, label)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-            sum_loss += loss.item()
-            _, predict = torch.max(output.data, 1)
-            correct += (predict == label).sum().item()
-
-        acc = 100.0 * correct / len(data_loader["train"].dataset)
-        acc_list.append(acc)
-
-        # 更新并保存最佳模型
-        if acc > best_acc:
-            best_acc = acc
-            torch.save(model.state_dict(), best_model_path)
-
-        print(
-            "# Epoch: {} | Loss: {:.4f} | Accuracy: {:.4f} | best acc: {:.4f}".format(
-                epoch, sum_loss / len(data_loader["train"].dataset), acc, best_acc
-            )
-        )
-
-    print("Best Accuracy: {}".format(best_acc))
-
-    # 保存训练结束后的最终模型
-    torch.save(model.state_dict(), final_model_path)
-
-
 def my_train_with_cross_validation():
     from sklearn.model_selection import KFold
     from early_stopping import EarlyStopping  # 自己实现的早停实现
 
     NUM_EPOCH = 2000  # 因为加入了 early stop 所以这个可以设置高一点。
+    PATIENCE = 200  # early stop 的 patience 参数
     BATCH_SIZE = 128
     best_acc = 0
     K_FOLDS = 5
-    best_model_path = "best_model.pth"  # 最好模型的保存路径
+    datapro = combined_transform  # 可设置为 None / combined transform 注意不要括号，因为是传函数对象
+    model_path = Path("model")
+    if not model_path.exists():
+        model_path.mkdir(parents=True, exist_ok=True)
+    best_model_path = model_path / "best_model.pth"
 
     # 加载数据集
     data = np.load("data/train_data.npy")
@@ -373,12 +278,8 @@ def my_train_with_cross_validation():
         # 创建 dataloader
         # 注意这里要用 train_feeder 类是因为交叉验证需要直接传入 npy 而不是路径
         # 注意格式转换，要转换成 float 和 long
-        train_dataset = TrainFeeder(
-            train_data, train_labels, transform=combined_transform
-        )
-        val_dataset = TrainFeeder(
-            val_data, val_labels, transform=combined_transform
-        )
+        train_dataset = TrainFeeder(train_data, train_labels, transform=datapro)
+        val_dataset = TrainFeeder(val_data, val_labels, transform=datapro)
 
         data_loader = {
             "train": torch.utils.data.DataLoader(
@@ -391,7 +292,7 @@ def my_train_with_cross_validation():
 
         # 创建早停实例
         early_stopping = EarlyStopping(
-            patience=100, verbose=True, path=f"fold_{fold}_best_model.pth"
+            patience=PATIENCE, verbose=True, path=str(model_path / f"fold_{fold}_best_model.pth")
         )
 
         # 训练模型
@@ -462,7 +363,7 @@ def my_inference():
     model.eval()
 
     # Prepare the data loader
-    dataset = InferFeeder(data_path, 'npy')
+    dataset = InferFeeder(data_path, "npy")
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
 
     # Inference
@@ -483,11 +384,11 @@ def my_inference():
                     print(f"  Class {idx}: {prob.item():.4f}")
 
 
-def recognize_actions_and_scores_in_video(model, data_path, data_type='npy'):
+def recognize_actions_and_scores_in_video(model, data_path, data_type="npy"):
     # 加载和预处理视频数据
     import time
 
-    dataset = Feeder(data_path, data_type)
+    dataset = InferFeeder(data_path, data_type)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
 
     start_time = time.time()
@@ -507,5 +408,5 @@ def recognize_actions_and_scores_in_video(model, data_path, data_type='npy'):
 
 
 if __name__ == "__main__":
-    # my_train_with_cross_validation()
-    my_inference()
+    my_train_with_cross_validation()
+    # my_inference()

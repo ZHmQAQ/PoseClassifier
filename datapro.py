@@ -13,7 +13,7 @@ def random_translation(data, max_translation=10):
     return data
 
 
-def random_rotation(data, max_angle=120):
+def random_rotation(data, max_angle=20):
     # 随机旋转
     # 二维平面旋转
     angle = np.random.uniform(-max_angle, max_angle)
@@ -34,10 +34,10 @@ def random_rotation(data, max_angle=120):
     return data
 
 
-def random_scaling(data, min_scale=0.5, max_scale=2):
+def random_scaling(data, max_scale=2):
     # 随机缩放
     for i in range(data.shape[0]):
-        scale = np.random.uniform(min_scale, max_scale)
+        scale = np.random.uniform(-max_scale, max_scale)
         # tmp = (2 ** scale) 
         data[i, :, :, :] *= (2 ** scale) 
     return data
