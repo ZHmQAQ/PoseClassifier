@@ -9,8 +9,9 @@ from score import Score
 
 
 # 加载预训练模型的函数
-def load_model(model_path='best_model.pth'):
+def load_model(model_path=r"model\best_model.pth"):
     from model import ST_GCN
+
     model = ST_GCN(num_classes=14, in_channels=2, t_kernel_size=9, hop_size=1)
     model.load_state_dict(torch.load(model_path))
     model.eval()
@@ -24,7 +25,8 @@ def recognize_actions_and_scores_in_video(model, video_path):
     # 视频转关键点
     keypoints = RTM_Pose_Tran(video_path)
     # 关键点输入模型，取得分类
-    action, conf = model.predict(keypoints)
+    action, conf = 1, 1
+            # (model.predict(keypoints))
     if conf < 0.5:
         action = 14  # 置信度过低，分类到“其它”
         score = 0
@@ -77,13 +79,27 @@ def main(args):
 # 设置命令行参数
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="视频动作识别和打分")
+
+    # 设置默认值的例子
     parser.add_argument(
-        "--video_directory", type=str, required=True, help="视频文件目录"
+        "--video_directory",
+        type=str,
+        default="vid",  # 默认视频文件目录
+        help="视频文件目录",
     )
     parser.add_argument(
-        "--result_directory", type=str, required=True, help="结果输出目录"
+        "--result_directory",
+        type=str,
+        default="res",  # 默认结果输出目录
+        help="结果输出目录",
     )
-    parser.add_argument("--phone_number", type=str, required=True, help="队长手机号")
+    parser.add_argument(
+        "--phone_number",
+        type=str,
+        default="1234567890",  # 默认的队长手机号
+        help="队长手机号",
+    )
+
     args = parser.parse_args()
 
     main(args)
