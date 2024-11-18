@@ -212,6 +212,10 @@ def testmain():
     # score_vedio(arr7, label, data, [std_normposes_arr])
 
 
+def Score(data, label):
+    return 0.7
+
+
 if __name__ == "__main__":
 
     # 判定模型超参数
