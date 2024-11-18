@@ -3,3 +3,4 @@
 *.pyc
 *.pyc
 /__pycache__
+__pycache__/datapro.cpython-310.pyc
