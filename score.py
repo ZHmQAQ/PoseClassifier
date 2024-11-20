@@ -1,8 +1,9 @@
 import numpy as np
-from scipy.interpolate import interp1d
-
 import json
 import os
+
+from utils import xy_normal, interpolate_frames
+
 
 FPS = 15  # 帧率
 PRE_T = 1000  # 判定区间 Previous ms
@@ -84,53 +85,6 @@ def cpr_angle(angles, angles_std):
         ind = np.digitize(allerror[i], ERROR_LEVEL[i])
         scores.append(ERROR_SCORE[ind])
     return np.sum(np.array(scores) * ACTION_WEIGHT)
-
-
-# xy坐标归一化
-def xy_normal(posarr):
-    resarr = np.copy(posarr)
-    # 计算x和y坐标的最小值和最大值
-    x_min, x_max = np.min(resarr[:, :, 0]), np.max(resarr[:, :, 0])
-    y_min, y_max = np.min(resarr[:, :, 1]), np.max(resarr[:, :, 1])
-
-    # 归一化x和y坐标
-    resarr[:, :, 0] = (resarr[:, :, 0] - x_min) / (x_max - x_min)
-    resarr[:, :, 1] = (resarr[:, :, 1] - y_min) / (y_max - y_min)
-    
-    return resarr
-
-
-
-def interpolate_frames(matrix, target_frames):
-    """
-    对输入的17x2矩阵进行帧插值，将帧数从200调整到指定的target_frames。
-
-    参数：
-    - matrix: 一个形状为(200, 17, 2)的numpy数组，表示200帧的姿态点数据，17个点的xy坐标。
-    - target_frames: 目标帧数，范围为150~250。
-
-    返回：
-    - 插值后的矩阵，形状为(target_frames, 17, 2)。
-    """
-    # 原始帧数
-    original_frames = matrix.shape[0]
-
-    # 创建一个帧的序列
-    original_frame_indices = np.linspace(0, original_frames - 1, original_frames)
-    target_frame_indices = np.linspace(0, original_frames - 1, target_frames)
-
-    # 初始化插值结果
-    interpolated_matrix = np.zeros((target_frames, matrix.shape[1], matrix.shape[2]))
-
-    # 对每个姿态点（17个）进行插值
-    for i in range(matrix.shape[1]):  # 17个姿态点
-        for j in range(matrix.shape[2]):  # 每个姿态点的xy坐标
-            # 创建插值函数
-            interp_func = interp1d(original_frame_indices, matrix[:, i, j], kind='cubic', fill_value="extrapolate")
-            # 对该姿态点进行插值
-            interpolated_matrix[:, i, j] = interp_func(target_frame_indices)
-
-    return interpolated_matrix
 
 
 # 矩阵维度规范化

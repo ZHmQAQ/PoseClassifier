@@ -13,28 +13,6 @@ body = Body(
 )
 
 
-def PreProcess(result):
-
-    new_arr = [arr for i, arr in enumerate(result) if (i + 1) % 2 == 0]
-    print(len(new_arr))
-
-    if len(new_arr) > 200:
-        final_arr = new_arr[0:200]
-
-    elif len(new_arr) < 200:
-        length = len(new_arr)
-        for i in range(0, 200 - length):
-            new_arr.append(np.zeros([17, 2]))
-        final_arr = new_arr
-
-    else:
-        final_arr = new_arr
-
-    final_arr = np.asarray(final_arr)
-    final_arr = final_arr.transpose(2, 0, 1)
-
-    return final_arr
-
 
 def RTM_Pose_Tran(vid_path):
     """
@@ -63,7 +41,7 @@ def RTM_Pose_Tran(vid_path):
 
     # end = time.time()
 
-    return result
+    return np.asarray(result)
 
 
 if __name__ == "__main__":

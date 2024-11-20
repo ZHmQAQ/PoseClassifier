@@ -2,6 +2,8 @@ import torch
 import numpy as np
 import random
 
+import utils
+
 # 数据增强
 def random_translation(data, max_translation=10):
     # 随机平移
@@ -50,7 +52,17 @@ def combined_transform(data):
     return data
 
 
+def PreProcess(result):
+    """
+    1. 帧数插值
+    2. 轴变换
+    将 X * 17 * 2 插值到 Y * 17 * 2 （Y=220），然后轴变换 transpose(2, 0, 1) 到 2 * X * 17
+    """
 
+    new_arr = utils.interpolate_frames(result, 250)
+    final_arr = new_arr.transpose(2, 0, 1)
+
+    return final_arr
 
 # 用于读取数据的函数
 # class Feeder(torch.utils.data.Dataset):

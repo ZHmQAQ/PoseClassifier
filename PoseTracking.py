@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 import torch
 
-from rtmpose_tran import RTM_Pose_Tran, PreProcess
+from rtmpose_tran import RTM_Pose_Tran
+from datapro import PreProcess
 from score import Score
 
 
@@ -36,7 +37,7 @@ def recognize_actions_and_scores_in_video(model, video_path):
         score = 0
     else:
         # 关键点输入打分代码，取得评分
-        score = Score(np.asarray(keypoints), action[0][0])
+        score = Score(keypoints, action[0][0])
         print(f"score: {score}")
     end = time.time()
     duration = end - start
@@ -89,7 +90,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--video_directory",
         type=str,
-        default=r"pose9\ref",  # 默认视频文件目录
+        default="vid",  # 默认视频文件目录
         help="视频文件目录",
     )
     parser.add_argument(
