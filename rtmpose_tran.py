@@ -52,16 +52,19 @@ def RTM_Pose_Tran(vid_path):
     frame_count = 0
 
     while cap.isOpened():
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
         ret, img = cap.read()  # 读取一帧
+        if not ret:
+            break  # 视频结束，退出循环
 
-        keypoints, _ = body(img)
-        if len(keypoints) > 0:
-            result.append(keypoints[0])
-            frame_count += 1
+        if frame_num % 2 == 0:
+            keypoints, _ = body(img)
+            if len(keypoints) > 0:
+                result.append(keypoints[0])
+                frame_count += 1
 
-        frame_num += 1  # 跳帧
+        frame_num += 1  # 增加帧计数器
     cap.release()
+
 
     if frame_count < FRAME_THRESHOLD:
         good_vid = False
