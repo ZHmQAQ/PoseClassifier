@@ -37,8 +37,12 @@ def process_video_file(video_path):
     video_file = os.path.basename(video_path)
     if video_file in video_labels:
         # 使用 RTM_Pose_Tran 处理视频文件，获取关键点
-        _, keypoints = RTM_Pose_Tran(video_path)
-        keypoints = PreProcess(keypoints)
+        good_vid, keypoints = RTM_Pose_Tran(video_path)
+        if keypoints.shape[0] >= 100:
+            keypoints = PreProcess(keypoints)
+        else:
+            print("data ng, discard")
+            return
         print(f"shape: {keypoints.shape}")
         # 根据视频文件名从字典中获取对应的标签
         label = video_labels[video_file]
@@ -57,3 +61,10 @@ if __name__ == "__main__":
         os.path.join(output_dir, "label_mapping.json"), "w", encoding="utf-8"
     ) as f:
         json.dump(file_to_label_mapping, f, ensure_ascii=False, indent=4)
+
+# if __name__ == "__main__":
+#     dirr = r"..\dataset\14其他\reference_141.mp4"
+#     output_filename = r"..\data"
+#     good_vid, keypoints = RTM_Pose_Tran(dirr)
+#     print(f"shape: {keypoints.shape}")
+#     np.save(output_filename, {"keypoints": keypoints, "label": 1})

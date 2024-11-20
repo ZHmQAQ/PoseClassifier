@@ -23,8 +23,11 @@ def RTM_Pose_Tran(vid_path):
 
     print(f"vid path = {vid_path}")
     cap = cv2.VideoCapture(vid_path)
+    # 获取视频总帧数
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    # print(f"Total frames: {total_frames}")\
+    RATIO = 0.5
     result = []
-    FRAME_THRESHOLD = 180
     good_vid = True  # 判断视频有人类的帧数是否超过 FRAME_THRESHOLD
     frame_num = 0
     frame_count = 0
@@ -43,12 +46,10 @@ def RTM_Pose_Tran(vid_path):
         frame_num += 1  # 增加帧计数器
     cap.release()
 
-    if frame_count < FRAME_THRESHOLD:
+    if frame_count < total_frames * RATIO:
         good_vid = False
 
     return good_vid, np.asarray(result)
-
-
 
 
 if __name__ == "__main__":

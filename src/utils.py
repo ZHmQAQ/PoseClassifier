@@ -14,6 +14,10 @@ def interpolate_frames(matrix, target_frames):
     返回：
     - 插值后的矩阵，形状为(target_frames, 17, 2)。
     """
+    # 判断矩阵是否合法
+    if matrix.shape[0] <= 4:
+        return matrix
+
     # 原始帧数
     original_frames = matrix.shape[0]
 
