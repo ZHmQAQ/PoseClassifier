@@ -25,19 +25,26 @@ def load_model(model_path=r"model/bestbest/best_model.pth"):
 def recognize_actions_and_scores_in_video(model, video_path):
     start = time.time()
     # 视频转关键点
-    keypoints = RTM_Pose_Tran(video_path)
+    good_vid, keypoints = RTM_Pose_Tran(video_path)
+    if not good_vid:
+        action = 14  # 不是 good vid 直接分类到其它动作
+        score = 0
+        end = time.time()
+        duration = end - start
+        return action, score, duration
     # 分类模型输入预处理
     pp_keypoints = PreProcess(keypoints)
     # 关键点输入模型，取得分类
     action, conf = model.predict(pp_keypoints)
+    action = action[0][0]
     print(f"action: {action}, conf: {conf}")
-    if conf < 0.5:
-        action = 14  # 置信度过低，分类到“其它”
+    # 关键点输入打分代码，取得评分
+    score = Score(np.asarray(keypoints), action)
+    print(f"score: {score}")
+    # 如果 conf 和 score 双低，识别为其它动作
+    if conf[0] < 0.5 and score < 0.5:
+        action = 14
         score = 0
-    else:
-        # 关键点输入打分代码，取得评分
-        score = Score(np.asarray(keypoints), action[0][0])
-        print(f"score: {score}")
     end = time.time()
     duration = end - start
     return action, score, duration
@@ -101,7 +108,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--phone_number",
         type=str,
-        default="123456789011",  # 默认的队长手机号
+        default="123456789011111",  # 默认的队长手机号
         help="队长手机号",
     )
 

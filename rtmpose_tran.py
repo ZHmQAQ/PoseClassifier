@@ -42,28 +42,31 @@ def RTM_Pose_Tran(vid_path):
     :param vid_path:
     :return:
     """
-    # start = time.time()
+
     print(f"vid path = {vid_path}")
     cap = cv2.VideoCapture(vid_path)
     result = []
+    FRAME_THRESHOLD = 100
+    good_vid = True  # 判断视频有人类的帧数是否超过 FRAME_THRESHOLD
     frame_num = 0
+    frame_count = 0
 
     while cap.isOpened():
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
         ret, img = cap.read()  # 读取一帧
-        if not ret:
-            break  # 如果没有帧了，退出循环
-        if frame_num % 2 == 0:  # 仅抽取偶数帧
-            keypoints, _ = body(img)
-            if len(keypoints) > 0:
-                result.append(keypoints[0])
-            else:
-                print(f"no keypoints in this frame: {frame_num}")
-        frame_num += 1
+
+        keypoints, _ = body(img)
+        if len(keypoints) > 0:
+            result.append(keypoints[0])
+            frame_count += 1
+
+        frame_num += 1  # 跳帧
     cap.release()
 
-    # end = time.time()
+    if frame_count < FRAME_THRESHOLD:
+        good_vid = False
 
-    return result
+    return good_vid, result
 
 
 if __name__ == "__main__":
