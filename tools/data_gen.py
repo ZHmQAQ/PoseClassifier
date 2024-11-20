@@ -1,92 +1,59 @@
-import numpy as np
-# from convert import convert
-import os, shutil
-
+import os
 import json
+import numpy as np
+from src.datapro import PreProcess
+from src.rtmpose_tran import RTM_Pose_Tran
 
+# 读取 JSON 文件
+filename = r"..\dataset\video_annotations.json"
+video_dir = r"..\dataset"
+output_dir = r"..\data"
 
-def convert(arr_y):
-    arr = np.empty([200,17,2])
-    # print(data.shape[0])
-    for i, info in enumerate(arr_y):
-        # info = info.T
-        arr[i] = info
-    new_arr = arr.transpose(2,0,1) # new_arr 是转换后的数据
-    return new_arr
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
-
-pattern = 1
-
-# 假设json数据存储在standard.json文件中
-filename = r'.\datapro\video_annotations.json'
-
-# 读取JSON文件
-with open(filename, 'r', encoding="utf-8") as file:
+with open(filename, "r", encoding="utf-8") as file:
     data = json.load(file)
+# 创建一个字典，以视频名称为键，标签为值
+video_labels = {item["videoName"]: item["label"] for item in data}
 
-'.npy的地址'
-folder = r'.\datapro\wuqin'
-'''保存标准的数据集'''
-save_folder = r'.\datapro\save'
-save_label = '9'
-
-arry = []
-
-for file in os.listdir(folder):
-
-    # 根据'_keypoints'分割文件名
-    parts = file.split("_keypoints")
-    # 获取'_keypoints'前面的部分
-    video_id = parts[0]
-
-    label = []
-    # 遍历列表，查找对应的video_id并提取label
-    for video in data:
-        if video["videoId"] == video_id:
-            label = video["label"]
-            print(f"The label for video_id '{video_id}' is: {label}")
-            break
-    else:
-        print(f"Video_id '{video_id}' not found.")
-        
-
-    file_s = os.path.join(folder, file)
-    yuan_arr = np.load(file_s)
-
-    # save_path = os.path.join(save_folder, '{:02d}'.format(int(label)), video_id)
-    # np.save(save_path, yuan_arr)
-
-    if pattern == 0:
-
-        save_path = os.path.join(save_folder, '2_{:02d}'.format(int(label)), video_id)
-        chou2_arr = [arr for i, arr in enumerate(yuan_arr) if (i+1) % 2 == 0]
-        np.save(save_path, chou2_arr)
-    
-    elif pattern == 1:
-
-        '''丢帧与补零，并且将同类组合为一个'''
-        if label != save_label:
-            continue
-
-        new_arr = [arr for i, arr in enumerate(yuan_arr) if (i+1) % 4 == 0]
-
-        if len(new_arr) > 200:
-            final_arr = new_arr[0:200]
-
-        elif len(new_arr) < 200:
-            lenth = len(new_arr)
-            for i in range(0,200-lenth):
-                new_arr.append(np.zeros([17,2]))
-            final_arr = new_arr
-
-        else: 
-            final_arr = new_arr
-        
-        final_arr = convert(final_arr)
-        
-        arry.append(final_arr)
+# 创建一个字典来存储文件名到标签的映射，用于保存到 JSON 文件中
+file_to_label_mapping = {}
 
 
-save_path = os.path.join(save_folder, save_label)
-np.save(save_path, arry)
+def process_videos(directory):
+    # 遍历给定目录中的所有文件和子目录
+    for entry in os.listdir(directory):
+        path = os.path.join(directory, entry)
+        if os.path.isdir(path):
+            # 如果是目录，假设是子目录，继续遍历其中的文件
+            process_videos(path)
+        elif path.endswith(".mp4"):
+            # 如果是文件且为视频文件，处理视频
+            process_video_file(path)
 
+
+def process_video_file(video_path):
+    video_file = os.path.basename(video_path)
+    if video_file in video_labels:
+        # 使用 RTM_Pose_Tran 处理视频文件，获取关键点
+        _, keypoints = RTM_Pose_Tran(video_path)
+        keypoints = PreProcess(keypoints)
+        print(f"shape: {keypoints.shape}")
+        # 根据视频文件名从字典中获取对应的标签
+        label = video_labels[video_file]
+        # 构建输出文件名
+        output_filename = os.path.join(output_dir, video_file.replace(".mp4", ".npy"))
+        # 保存关键点数据和标签
+        np.save(output_filename, {"keypoints": keypoints, "label": label})
+        # 更新文件到标签的映射字典
+        file_to_label_mapping[output_filename] = label
+
+
+if __name__ == "__main__":
+    process_videos(video_dir)
+    # 将文件到标签的映射保存为 JSON 文件
+    with open(
+        os.path.join(output_dir, "label_mapping.json"), "w", encoding="utf-8"
+    ) as f:
+        json.dump(file_to_label_mapping, f, ensure_ascii=False, indent=4)
