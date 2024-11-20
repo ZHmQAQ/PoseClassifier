@@ -32,7 +32,7 @@ def my_train_with_cross_validation():
     BATCH_SIZE = 128
     best_acc = 0
     K_FOLDS = 5
-    datapro = combined_transform  # 可设置为 None / combined transform 注意不要括号，因为是传函数对象
+    datapro = None  # 可设置为 None / combined transform 注意不要括号，因为是传函数对象
     model_path = Path("model")
     if not model_path.exists():
         model_path.mkdir(parents=True, exist_ok=True)

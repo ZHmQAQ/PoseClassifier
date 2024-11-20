@@ -1,7 +1,11 @@
 
 *.pyc
-*.pyc
-*.pyc
 /__pycache__
 __pycache__/datapro.cpython-310.pyc
-*.pyc
+*.mp4
+*.csv
+/res/
+/pose9/
+/vid/
+/训练数据集/
+/分别组合/

@@ -41,14 +41,14 @@ val_labels = []
 for i, cls_data in enumerate(data):
     # 随机打乱索引
     indices = np.random.permutation(len(cls_data))
-    train_indices = indices[:40]  # 选取前40个作为训练数据
-    val_indices = indices[40:50]  # 选取接下来10个作为验证数据
+    train_indices = indices[:45]  # 选取前40个作为训练数据
+    val_indices = indices[45:50]  # 选取接下来10个作为验证数据
 
     train_data.append(cls_data[train_indices])
     val_data.append(cls_data[val_indices])
 
-    train_labels.append(np.full(40, i))  # 生成训练标签
-    val_labels.append(np.full(10, i))  # 生成验证标签
+    train_labels.append(np.full(45, i))  # 生成训练标签
+    val_labels.append(np.full(5, i))  # 生成验证标签
 
 
 # 将列表转换为numpy数组
@@ -58,10 +58,10 @@ train_labels = np.concatenate(train_labels)
 val_labels = np.concatenate(val_labels)
 
 # 保存处理后的数据和标签
-np.save("data/train_data.npy", train_data)
-np.save("data/val_data.npy", val_data)
-np.save("data/train_label.npy", train_labels)
-np.save("data/val_label.npy", val_labels)
+# np.save("data/train_data.npy", train_data)
+# np.save("data/val_data.npy", val_data)
+# np.save("data/train_label.npy", train_labels)
+# np.save("data/val_label.npy", val_labels)
 
 # 输出数据和标签的形状，以确保一切正常
 print("Train data shape:", train_data.shape)

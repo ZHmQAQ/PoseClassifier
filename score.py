@@ -1,7 +1,8 @@
 import numpy as np
+from scipy.interpolate import interp1d
+
 import json
 import os
-import itertools
 
 FPS = 15  # 帧率
 PRE_T = 1000  # 判定区间 Previous ms
@@ -23,11 +24,27 @@ ERROR_LEVEL =  [[10, 20, 30],
 
 ERROR_SCORE = [1.0, 0.8, 0.6, 0.0]
 
+STD_FOLDER = r".\config\score_stddata"
 
 # 判定模型超参数
 ANGLE_LEVEL_RATIO = 2.86
-POSES_ERROR_RATIO = 0.0016
-VEC_POS_ALPHA = 0.01
+POSES_ERROR_RATIO = 0.01
+VEC_POS_ALPHA = 0.001
+
+
+# 加载标准姿态数组
+stdfiles = ["standard_00.npy", "standard_01.npy", "standard_02.npy", "standard_03.npy", 
+            "standard_04.npy", "standard_05.npy", "standard_06.npy", "standard_07.npy",
+            "standard_08.npy", "standard_09.npy", "standard_10.npy", "standard_11.npy",
+            "standard_12.npy", "standard_13.npy"]
+std_normposes_arr = {}
+for STD_file_i in os.listdir(STD_FOLDER):
+    if STD_file_i in stdfiles:
+        idx = stdfiles.index(STD_file_i)
+        fp = os.path.join(STD_FOLDER, STD_file_i)
+        tmparr = np.load(fp)
+        std_normposes_arr[idx] = tmparr
+
 
 # 由两个向量计算角度
 def vec_angle(vec1, vec2):
@@ -45,7 +62,7 @@ def vec_angle(vec1, vec2):
     return np.degrees(np.arccos(cos_theta))
 
 
-# 有姿态矩阵计算角度
+# 由姿态矩阵计算角度
 def cpt_angle(posarr):
     # 维度 17 * 2
     angle1 = vec_angle(posarr[ 8] - posarr[ 6], posarr[12] - posarr[ 6])
@@ -81,6 +98,39 @@ def xy_normal(posarr):
     resarr[:, :, 1] = (resarr[:, :, 1] - y_min) / (y_max - y_min)
     
     return resarr
+
+
+
+def interpolate_frames(matrix, target_frames):
+    """
+    对输入的17x2矩阵进行帧插值，将帧数从200调整到指定的target_frames。
+
+    参数：
+    - matrix: 一个形状为(200, 17, 2)的numpy数组，表示200帧的姿态点数据，17个点的xy坐标。
+    - target_frames: 目标帧数，范围为150~250。
+
+    返回：
+    - 插值后的矩阵，形状为(target_frames, 17, 2)。
+    """
+    # 原始帧数
+    original_frames = matrix.shape[0]
+
+    # 创建一个帧的序列
+    original_frame_indices = np.linspace(0, original_frames - 1, original_frames)
+    target_frame_indices = np.linspace(0, original_frames - 1, target_frames)
+
+    # 初始化插值结果
+    interpolated_matrix = np.zeros((target_frames, matrix.shape[1], matrix.shape[2]))
+
+    # 对每个姿态点（17个）进行插值
+    for i in range(matrix.shape[1]):  # 17个姿态点
+        for j in range(matrix.shape[2]):  # 每个姿态点的xy坐标
+            # 创建插值函数
+            interp_func = interp1d(original_frame_indices, matrix[:, i, j], kind='cubic', fill_value="extrapolate")
+            # 对该姿态点进行插值
+            interpolated_matrix[:, i, j] = interp_func(target_frame_indices)
+
+    return interpolated_matrix
 
 
 # 矩阵维度规范化
@@ -119,7 +169,7 @@ def sliding_window_error(error_matrix, window_size):
         # 选取窗口内的数据
         window = error_matrix[i:i+window_size]
         # 计算窗口内所有帧的误差总和
-        total_errors[i+PRE_FN] = np.sum([cpt_ferror(frame) for frame in window]) / len(window_size)
+        total_errors[i+PRE_FN] = np.min([cpt_ferror(frame) for frame in window])
     
     total_errors[0:PRE_FN]  = total_errors[PRE_FN]
     total_errors[-NEX_FN:] = total_errors[-NEX_FN-1]
@@ -136,11 +186,14 @@ def cpt_posdiff(normposes):
     return padded_diff_matrix
 
 
-def score_vedio(arr, label, data, std_normposes_arr):
+def score_arr(arr, label, data, std_normposes_arr):
 
-    # 动作误差计算
+    
+    # 动作误差计算  std_normposes 与 normposes
     std_normposes = std_normposes_arr[label]
-    normposes = arr_std(xy_normal(arr), std_normposes.shape[0])
+    # normposes = arr_std(xy_normal(arr), std_normposes.shape[0])
+    arr = interpolate_frames(arr, std_normposes.shape[0])
+    normposes = xy_normal(arr)
 
     std_normposes_diff = cpt_posdiff(std_normposes)
     normposes_diff = cpt_posdiff(normposes)
@@ -179,76 +232,23 @@ def score_vedio(arr, label, data, std_normposes_arr):
     return totalscore
 
 
-def testmain():
-    # 读取JSON文件
-    with open('parsed_data.json', 'r') as file:
+def Score(npy, label):
+
+    # 加载JSON文件
+    with open(os.path.join(STD_FOLDER, 'parsed_data.json'), 'r') as file:
         data = json.load(file)
 
-    std_normposes_arr = np.load('standard_0_norm.npy')
+    # arr = np.load(npy)
 
-    label = 0
-
-    # arr1 = np.load("00_01.npy")   # refrence-0  0.871667
-
-    folder = r'.\0'
-
-    std_score = np.load('label0_score.npy')
-
-    all_score = []
-
-    for file in os.listdir(folder):
-        file_arr = os.path.join(folder, file)
-        arr = np.load(file_arr)
-
-        all_score.append(score_vedio(arr, label, data, [std_normposes_arr]))
-    
-    error_score = np.abs(np.array(all_score) - std_score)
-    return sum(error_score) / std_score.shape[0]
-    # standard_arr = xy_normal(arr1)
-    # np.save('standard_0_norm.npy', standard_arr)
-
-    # print(np.array_equal(arr0, arr1))
-
-    # score_vedio(arr7, label, data, [std_normposes_arr])
-
-
-def Score(data, label):
-    return 0.7
+    return score_arr(npy, label, data, std_normposes_arr)
 
 
 if __name__ == "__main__":
 
-    # 判定模型超参数
-    # ANGLE_LEVEL_RATIO = 2.867
-    # POSES_ERROR_RATIO = 0.00129
-    # VEC_POS_ALPHA = 0.00
-
-    ANGLE_LEVEL_RATIO_i = np.arange(2.867, 2.868, 0.002)
-    POSES_ERROR_RATIO_i = np.arange(0.00128, 0.00131, 0.00001)
-    VEC_POS_ALPHA_i = np.arange(0.000, 0.004, 0.001)
-
-    hyperparameters_list = list(itertools.product(ANGLE_LEVEL_RATIO_i, POSES_ERROR_RATIO_i, VEC_POS_ALPHA_i))
-    
-    hyperparameters_opt = [0, 0, 0]
-
-    cur_avg_score = 100
-    for hyperparameters in hyperparameters_list:
-        ANGLE_LEVEL_RATIO = hyperparameters[0]
-        POSES_ERROR_RATIO = hyperparameters[1]
-        VEC_POS_ALPHA = hyperparameters[2]
-
-        avg_score = testmain()
-        print(hyperparameters)
-        print(avg_score)
-        # 找到更优参数
-        if cur_avg_score >= avg_score:
-            cur_avg_score = avg_score
-            hyperparameters_opt = hyperparameters
-    
-    print("最优参数：")
-    print(hyperparameters_opt)
-    print(cur_avg_score)
-
-
-
-        
+    # video_path = os.path.join(STD_FOLDER, "test_10.npy")
+    video_path = os.path.join(r".\datapro\save\2_08","动作8-5-85.npy")
+    for i in range(14):
+        res = Score(npy=video_path, label=i)
+        print("label ", i, " - score:", res)
+    # res = score_npy(npy=video_path, label=0)
+    # print("score:", res)
