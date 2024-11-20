@@ -1,11 +1,9 @@
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from pathlib import Path
 
-from data_feeder import TrainFeeder, InferFeeder
-from datapro import combined_transform
+from src.data_feeder import TrainFeeder, InferFeeder
 from model import ST_GCN
 
 
@@ -25,7 +23,7 @@ torch.use_deterministic_algorithms = True
 
 def my_train_with_cross_validation():
     from sklearn.model_selection import KFold
-    from early_stopping import EarlyStopping  # 自己实现的早停实现
+    from src.early_stopping import EarlyStopping  # 自己实现的早停实现
 
     NUM_EPOCH = 2000  # 因为加入了 early stop 所以这个可以设置高一点。
     PATIENCE = 200  # early stop 的 patience 参数
