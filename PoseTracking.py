@@ -40,7 +40,7 @@ def recognize_actions_and_scores_in_video(model, video_path):
     print(f"action: {action}, conf: {conf}")
     # 关键点输入打分代码，取得评分
     score = Score(np.asarray(keypoints), action)
-    print(f"score: {score}")
+    print(f"score: {score} \n")
     # 如果 conf 和 score 双低，识别为其它动作
     if conf[0] < 0.5 and score < 0.5:
         action = 14
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--video_directory",
         type=str,
-        default=r"pose9\ref",  # 默认视频文件目录
+        default=r"vid\test11",  # 默认视频文件目录
         help="视频文件目录",
     )
     parser.add_argument(
