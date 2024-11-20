@@ -49,5 +49,7 @@ def RTM_Pose_Tran(vid_path):
     return good_vid, np.asarray(result)
 
 
+
+
 if __name__ == "__main__":
     _ = RTM_Pose_Tran("test.mp4")

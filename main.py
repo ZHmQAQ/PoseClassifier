@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from pathlib import Path
 
 from src.data_feeder import TrainFeeder, InferFeeder
-from model import ST_GCN
+from src.model import ST_GCN
 
 
 print("Use CUDA:", torch.cuda.is_available())
