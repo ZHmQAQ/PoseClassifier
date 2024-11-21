@@ -30,8 +30,8 @@ STD_FOLDER = r".\config\score_stddata"
 # 判定模型超参数
 ANGLE_LEVEL_RATIO = 2.86
 POSES_ERROR_RATIO = 0.01
-VEC_POS_ALPHA = 0.001
-
+VEC_POS_ALPHA = 0.000
+POWER_RATIO = 0.4
 
 # 加载标准姿态数组
 stdfiles = ["standard_00.npy", "standard_01.npy", "standard_02.npy", "standard_03.npy", 
@@ -186,15 +186,15 @@ def score_arr(arr, label, data, std_normposes_arr):
     return totalscore
 
 
-def Score(npy, label):
+def Score(npy, label, conf):
 
     # 加载JSON文件
     with open(os.path.join(STD_FOLDER, 'parsed_data.json'), 'r') as file:
         data = json.load(file)
 
     # arr = np.load(npy)
-
-    return score_arr(npy, label, data, std_normposes_arr)
+    tmpscore = score_arr(npy, label, data, std_normposes_arr)
+    return np.power(tmpscore, (2 - conf) * POWER_RATIO)
 
 
 if __name__ == "__main__":

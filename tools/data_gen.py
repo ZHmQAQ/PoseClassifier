@@ -6,7 +6,7 @@ from src.rtmpose_tran import RTM_Pose_Tran
 
 # 读取 JSON 文件
 filename = r"..\dataset\video_annotations.json"
-video_dir = r"..\dataset"
+video_dir = r"..\dataset\extra"
 output_dir = r"..\data"
 
 if not os.path.exists(output_dir):
