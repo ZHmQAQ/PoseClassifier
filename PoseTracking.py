@@ -25,7 +25,7 @@ def load_model(model_path=r"model/bestbest/best_model_2.pth"):
 def recognize_actions_and_scores_in_video(model, video_path):
     start = time.time()
     # 视频转关键点
-    good_vid, keypoints = RTM_Pose_Tran(video_path, display_pose=False)
+    good_vid, keypoints = RTM_Pose_Tran(video_path, display_pose=True)
     if not good_vid:
         action = 14
         score = 0
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--video_directory",
         type=str,
-        default="vid/qydebug",  # 默认视频文件目录
+        default="vid/zsx",  # 默认视频文件目录
         help="视频文件目录",
     )
     parser.add_argument(
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--phone_number",
         type=str,
-        default="qydbg",  # 默认的队长手机号
+        default="zsx演示",  # 默认的队长手机号
         help="队长手机号",
     )
 
