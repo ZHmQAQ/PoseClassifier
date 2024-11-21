@@ -1,9 +1,5 @@
-# 分为 train 和 val，有不同的功能。
-
 import numpy as np
-import torch
 from torch.utils.data import Dataset
-from rtmpose_tran import RTM_Pose_Tran
 
 
 class TrainFeeder(Dataset):
@@ -32,12 +28,12 @@ class TrainFeeder(Dataset):
 
 
 class InferFeeder(Dataset):
+    # 预期行为： as a label-less feeder
+    # not correctly implemented
     def __init__(self, data_path, data_type="npy"):
         super(InferFeeder, self).__init__()
         if data_type == "npy":
             self.data = np.load(data_path)
-        elif data_type == "vid":
-            self.data = RTM_Pose_Tran(data_path)
 
     def __len__(self):
         return len(self.data)

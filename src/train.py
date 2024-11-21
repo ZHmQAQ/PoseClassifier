@@ -1,42 +1,13 @@
 import numpy as np
 import torch
-import torch.nn.functional as F
 from pathlib import Path
-import matplotlib.pyplot as plt
 
 from src.data_feeder import TrainFeeder, InferFeeder
 from src.model import ST_GCN
 from datapro import combined_transform
-from utils import plot_confusion_matrix
+from src.visualize import evaluate_and_plot_confusion_matrix
 
 
-# 获取模型的预测结果并计算混淆矩阵
-def evaluate_and_plot_confusion_matrix(model, data_loader, classes, save_path=None):
-    """
-    在给定的数据集上评估模型并绘制混淆矩阵。
-
-    Parameters:
-    - model: 训练好的模型
-    - data_loader: 数据加载器（可以是训练集或验证集）
-    - classes: 类别名称（例如 ['0', '1', '2', ..., '9']）
-    - save_path: 图片保存
-    """
-    model.eval()  # 设置模型为评估模式
-    all_labels = []
-    all_preds = []
-
-    with torch.no_grad():
-        for data, target in data_loader:
-            output = model(data)
-            _, predicted = output.max(1)
-            all_labels.extend(target.cpu().numpy())
-            all_preds.extend(predicted.cpu().numpy())
-
-    # 绘制混淆矩阵
-    # 设置支持中文的字体
-    plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']  # Windows系统中
-    plt.rcParams["axes.unicode_minus"] = False  # 防止负号显示为乱码
-    plot_confusion_matrix(np.array(all_labels), np.array(all_preds), classes, save_path=save_path)
 
 
 def train():
@@ -177,10 +148,8 @@ def train():
 
 
 def train_2():
-    from sklearn.model_selection import KFold
-    from src.early_stopping import EarlyStopping  # 早停
 
-    NUM_EPOCH = 230  # 因为加入了 early stop 所以这个可以设置高一点无所谓
+    NUM_EPOCH = 300  # 因为加入了 early stop 所以这个可以设置高一点无所谓
     PATIENCE = 30  # early stop 的 patience 参数
     BATCH_SIZE = 128
     best_tracc, best_vaacc, best_valoss, best_epoch = 0, 0, 10, -1
@@ -189,18 +158,11 @@ def train_2():
     model_path = Path("../model")
     if not model_path.exists():
         model_path.mkdir(parents=True, exist_ok=True)
-    best_model_path = model_path / "best_model_2.pth"
+    best_model_path = model_path / "best_model_3.pth"
 
     # 加载数据集
     data = np.load("../tools/train_keypoints.npy")
     labels = np.load("../tools/train_labels.npy")
-    # print(f"data shape: {data.shape}")
-    # print(f"labels shape: {labels.shape}")
-
-    # # debug: 检查 label 是否越界
-    # num_classes = 14  # 你的类别总数
-    # assert labels.max() < num_classes, "Label index exceeds number of classes"
-    # assert labels.min() >= 0, "Label index is negative"
 
     # 实例化模型
     # 交叉验证每折都要重置模型，不然等于是在之前的基础上继续训练，必会 100% 准确率
@@ -213,7 +175,7 @@ def train_2():
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=0.005,  # 学习率
-        weight_decay=2e-4,  # L2 正则化系数（权重衰减）
+        weight_decay=3e-4,  # L2 正则化系数（权重衰减）
     )
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -225,8 +187,6 @@ def train_2():
     )
     # 打印数据集的大小
     print(f"Training data size: {train_data.shape}, Test data size: {val_data.shape}")
-    # train_data, val_data = data[0:670], data[670:]
-    # train_labels, val_labels = labels[0:670], labels[670:]
 
     # 使用 np.unique 统计每个元素的出现次数
     unique_elements, counts = np.unique(val_labels, return_counts=True)
@@ -248,13 +208,6 @@ def train_2():
             val_dataset, batch_size=BATCH_SIZE, shuffle=False
         ),
     }
-
-    # 创建早停实例
-    early_stopping = EarlyStopping(
-        patience=PATIENCE,
-        verbose=True,
-        path=str(model_path / f"earlystop_best_model.pth"),
-    )
 
     # 训练模型
     for epoch in range(1, NUM_EPOCH + 1):
@@ -294,12 +247,6 @@ def train_2():
             f"Epoch {epoch}, Train Acc: {train_acc:.2f}%, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%"
         )
 
-        # 调用早停
-        # early_stopping(val_loss, model)
-        # if early_stopping.early_stop:
-        #     print(f"epoch {epoch}")
-        #     break
-
         # 更新并保存最佳模型
         if val_acc > best_vaacc:
             best_vaacc = val_acc
@@ -322,6 +269,7 @@ def train_2():
         [f"八段锦{i}" for i in range(8)] + [f"五禽戏{i}" for i in range(6)] + ["其他"]
     )
     # 训练完成后，绘制训练集和验证集的混淆矩阵
+    # TODO: 模块化
     print("\nConfusion Matrix on Training Set:")
     evaluate_and_plot_confusion_matrix(model, data_loader["train"], classes, save_path='..\model\TRA_confusion_matrix.png')
 
@@ -329,13 +277,6 @@ def train_2():
     evaluate_and_plot_confusion_matrix(model, data_loader["val"], classes, save_path='..\model\VAL_confusion_matrix.png')
 
     print("best Epoch:", best_epoch, " : ", best_vaacc, best_tracc, best_valoss)
-
-
-def test_model():
-    """
-    验证训练后的模型
-    """
-    pass
 
 
 if __name__ == "__main__":

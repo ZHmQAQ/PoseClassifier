@@ -1,5 +1,4 @@
 import json
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
@@ -31,7 +30,7 @@ def plot_confusion_matrix(
     # 设置标签和标题
     ax.set_xlabel("Predicted label")
     ax.set_ylabel("True label")
-    ax.set_title(title)
+    # ax.set_title(title)
 
     # 设置坐标轴刻度
     ax.set_xticks(np.arange(len(classes)))
@@ -59,40 +58,11 @@ def plot_confusion_matrix(
     # 如果提供了保存路径，则保存图像
     if save_path:
         plt.savefig(
-            save_path, bbox_inches="tight"
+            save_path, dpi=300, bbox_inches="tight"
         )  # bbox_inches='tight' 防止保存时裁剪图像
         print(f"图像已保存至 {save_path}")
     plt.show()
 
-
-def plot_loss_curve(train_losses, val_losses, save_path=None):
-    """
-    绘制训练和验证过程中的损失（Loss）曲线。
-
-    Parameters:
-    - train_losses: 训练集的损失值列表
-    - val_losses: 验证集的损失值列表
-    - save_path: 如果提供，损失曲线会保存为图片。默认为 None，表示不保存。
-    """
-    plt.figure(figsize=(10, 6))
-    plt.plot(
-        train_losses, label="Training Loss", color="blue", linestyle="-", linewidth=2
-    )
-    plt.plot(
-        val_losses, label="Validation Loss", color="red", linestyle="--", linewidth=2
-    )
-    plt.title("Loss Curve")
-    plt.xlabel("Epochs")
-    plt.ylabel("Loss")
-    plt.legend()
-    plt.grid(True)
-
-    # 保存图像（可选）
-    if save_path:
-        plt.savefig(save_path)
-        print(f"Loss curve saved to {save_path}")
-
-    plt.show()
 
 
 def get_videolabel(videoid: str) -> int:

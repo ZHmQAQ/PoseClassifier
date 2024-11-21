@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Graph:
     def __init__(self, hop_size):
         # 规定边缘排列，作为集合{{起点,终点},{起点,终点},{起点,终点……}这样规定一个边为元素。

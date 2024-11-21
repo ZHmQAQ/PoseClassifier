@@ -1,5 +1,6 @@
 import torch
 
+
 class EarlyStopping:
     def __init__(self, patience=5, verbose=False, delta=0, path='checkpoint.pth'):
         """
