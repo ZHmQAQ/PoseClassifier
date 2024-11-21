@@ -68,6 +68,7 @@ def RTM_Pose_Tran(vid_path, display_pose=False):
     # print(f"Total frames: {total_frames}")\
     RATIO = 0.5
     INTERVAL = 3  # 抽帧间隔，每 x 帧抽一帧
+    SCALE = 600  # 窗口显示尺寸（高）
     result = []
     good_vid = True  # 判断视频有人类的帧数是否超过 FRAME_THRESHOLD
     frame_num = 0
@@ -75,11 +76,11 @@ def RTM_Pose_Tran(vid_path, display_pose=False):
 
     if display_pose:
         # 定义展示的窗口尺寸
-        window_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        window_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        window_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        window_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
         # 设置 OpenCV 窗口的大小
         cv2.namedWindow("Pose Estimation", cv2.WINDOW_NORMAL)
-        cv2.resizeWindow("Pose Estimation", window_width, window_height)
+        cv2.resizeWindow("Pose Estimation", int(SCALE * window_width / window_height), SCALE)
 
     while cap.isOpened():
         ret, img = cap.read()  # 读取一帧
