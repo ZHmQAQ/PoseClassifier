@@ -14,10 +14,27 @@ body = Body(
 
 # 姿态点之间的连接关系
 neighbor_base = [
-    (0, 1), (1, 2), (2, 0), (2, 4), (1, 3), (6, 4), (5, 3),
-    (8, 6), (5, 7), (6, 5), (8, 10), (7, 9), (12, 6), (14, 12),
-    (16, 14), (11, 5), (11, 13), (13, 15),
+    (0, 1),
+    (1, 2),
+    (2, 0),
+    (2, 4),
+    (1, 3),
+    (6, 4),
+    (5, 3),
+    (8, 6),
+    (5, 7),
+    (6, 5),
+    (8, 10),
+    (7, 9),
+    (12, 6),
+    (14, 12),
+    (16, 14),
+    (11, 5),
+    (11, 13),
+    (13, 15),
 ]
+
+
 # 绘制姿态点
 def draw_pose_and_connections(frame, keypoints):
     # 绘制连接线
@@ -25,7 +42,9 @@ def draw_pose_and_connections(frame, keypoints):
         x1, y1 = keypoints[start]
         x2, y2 = keypoints[end]
         # 绘制线条（连接两个姿态点）
-        cv2.line(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)  # 绿色，线宽2
+        cv2.line(
+            frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2
+        )  # 绿色，线宽2
 
     for point in keypoints:
         x, y = point
@@ -56,8 +75,8 @@ def RTM_Pose_Tran(vid_path, display_pose=False):
 
     if display_pose:
         # 定义展示的窗口尺寸
-        window_width = 800  # 自定义窗口的宽度
-        window_height = 600  # 自定义窗口的高度
+        window_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        window_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         # 设置 OpenCV 窗口的大小
         cv2.namedWindow("Pose Estimation", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Pose Estimation", window_width, window_height)
@@ -76,7 +95,9 @@ def RTM_Pose_Tran(vid_path, display_pose=False):
 
                 # 可视化姿态点
                 if display_pose:
-                    cv2.imshow("Pose Estimation", draw_pose_and_connections(img, keypoints[0]))
+                    cv2.imshow(
+                        "Pose Estimation", draw_pose_and_connections(img, keypoints[0])
+                    )
                     # 按键 'q' 退出
                     if cv2.waitKey(1) & 0xFF == ord("q"):
                         break
