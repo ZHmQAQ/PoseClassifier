@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from rtmlib import Body
-import torch
+import torch  # 不能删除，删了之后 onnxruntime 无法使用 GPU 推理
 
 # 初始化Body模型
 body = Body(
@@ -67,7 +67,7 @@ def RTM_Pose_Tran(vid_path, display_pose=False):
     print(f"total frames = {total_frames}")
     # print(f"Total frames: {total_frames}")\
     RATIO = 0.5
-    INTERVAL = 3  # 抽帧间隔，每 x 帧抽一帧
+    INTERVAL = 2  # 抽帧间隔，每 x 帧抽一帧
     SCALE = 600  # 窗口显示尺寸（高）
     result = []
     good_vid = True  # 判断视频有人类的帧数是否超过 FRAME_THRESHOLD
