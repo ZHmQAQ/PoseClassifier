@@ -96,7 +96,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--video_directory",
         type=str,
-        default="vid/zsx",  # 默认视频文件目录
+        default="vid/pk",  # 默认视频文件目录
         help="视频文件目录",
     )
     parser.add_argument(
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--phone_number",
         type=str,
-        default="zsx演示",  # 默认的队长手机号
+        default="pk?!!!!",  # 默认的队长手机号
         help="队长手机号",
     )
 
