@@ -11,11 +11,20 @@ from src.score import Score
 
 
 # 加载预训练模型的函数
-def load_model(model_path=r"model/bestbest/best_model_2.pth"):
+def load_model(model_path=r"model/bestbest/best_model_3.pth"):
     from src.model import ST_GCN
 
+    # 检查 CUDA 是否可用
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        print("CUDA 可用，使用 GPU 加载模型")
+    else:
+        device = torch.device("cpu")
+        print("CUDA 不可用，使用 CPU 加载模型")
+
     model = ST_GCN(num_classes=15, in_channels=2, t_kernel_size=9, hop_size=1)
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.to(device)
     model.eval()
     return model
 
@@ -96,7 +105,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--video_directory",
         type=str,
-        default="vid/pk",  # 默认视频文件目录
+        default="dataset/TestData",  # 默认视频文件目录
         help="视频文件目录",
     )
     parser.add_argument(
@@ -108,7 +117,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--phone_number",
         type=str,
-        default="pk?!!!!",  # 默认的队长手机号
+        default="nishi",  # 默认的队长手机号
         help="队长手机号",
     )
 
