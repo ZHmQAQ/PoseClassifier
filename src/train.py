@@ -294,11 +294,15 @@ def train_3():
     model_path = Path("../model")
     if not model_path.exists():
         model_path.mkdir(parents=True, exist_ok=True)
-    best_model_path = model_path / "best_model_6_stratify.pth"
+    best_model_path = model_path / "best_model_7_exchange_val_and_test.pth"
 
     # 加载数据集
-    data = np.load("../tools/train_keypoints.npy")
-    labels = np.load("../tools/train_labels.npy")
+    train_data = np.load("../tools/train_keypoints.npy")
+    train_labels = np.load("../tools/train_labels.npy")
+
+    val_data = np.load("../data/test_keypoints/test_keypoints.npy")
+    val_labels = np.load("../data/test_keypoints/test_labels.npy")
+
 
     # 实例化模型
     model = ST_GCN(
@@ -316,9 +320,9 @@ def train_3():
 
     from sklearn.model_selection import train_test_split
 
-    # 设置划分比例，90% 用于训练集，10% 用于测试集
-    train_data, val_data, train_labels, val_labels = train_test_split(
-        data, labels, test_size=0.1, random_state=177, stratify=labels
+    # 设置划分比例，90% 用于训练集
+    train_data, test_data, train_labels, test_labels = train_test_split(
+        train_data, train_labels, test_size=0.2, random_state=177, stratify=train_labels
     )
     # 打印数据集的大小
     print(f"Training data size: {train_data.shape}, Test data size: {val_data.shape}")
@@ -332,6 +336,8 @@ def train_3():
     # 创建 dataloader
     train_dataset = TrainFeeder(train_data, train_labels, transform=datapro)
     val_dataset = TrainFeeder(val_data, val_labels, transform=datapro)
+    test_dataset = TrainFeeder(test_data, test_labels, transform=None)
+
     print(f"增强后的数据量：{len(train_dataset)}")
 
     data_loader = {
@@ -341,6 +347,9 @@ def train_3():
         "val": torch.utils.data.DataLoader(
             val_dataset, batch_size=BATCH_SIZE, shuffle=False
         ),
+        "test": torch.utils.data.DataLoader(
+            test_dataset, batch_size=BATCH_SIZE, shuffle=False
+        )
     }
 
     # 训练模型
@@ -409,7 +418,7 @@ def train_3():
         model,
         data_loader["train"],
         classes,
-        save_path="..\model\model5TRA_confusion_matrix.png",
+        save_path="..\model\model7TRA_confusion_matrix.png",
     )
 
     print("\nConfusion Matrix on Validation Set:")
@@ -417,10 +426,19 @@ def train_3():
         model,
         data_loader["val"],
         classes,
-        save_path="..\model\model5VAL_confusion_matrix.png",
+        save_path="..\model\model7VAL_confusion_matrix.png",
     )
 
     print("best Epoch:", best_epoch, " : ", best_vaacc, best_tracc, best_valoss)
+
+    # 训练完成后，绘制测试集的混淆矩阵
+    print("\nConfusion Matrix on TEST Set:")
+    evaluate_and_plot_confusion_matrix(
+        model,
+        data_loader["test"],
+        classes,
+        save_path="..\model\model7Test_confusion_matrix.png",
+    )
 
 
 if __name__ == "__main__":
