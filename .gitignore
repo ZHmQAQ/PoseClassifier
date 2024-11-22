@@ -9,3 +9,7 @@ __pycache__/datapro.cpython-310.pyc
 /vid/
 /训练数据集/
 /分别组合/
+dataset/video_annotations.json
+/.idea
+data/.DS_Store
+dataset/readme.md
