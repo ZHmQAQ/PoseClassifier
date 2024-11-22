@@ -2,18 +2,19 @@ import numpy as np
 import random
 import src.utils
 
+
 # 数据增强
-def random_translation(data, max_translation=10):
+def random_translation(data):
     # 随机平移
     for i in range(data.shape[0]):
         for j in range(data.shape[1]):
-            max_translation = random.choice([2, 20, 200])
+            max_translation = random.choice([2, 8, 32, 128, 256])
             t = np.random.uniform(-max_translation, max_translation)
             data[i, j, :, :] += t
     return data
 
 
-def random_rotation(data, max_angle=20):
+def random_rotation(data, max_angle=22):
     # 随机旋转
     # 二维平面旋转
     angle = np.random.uniform(-max_angle, max_angle)
@@ -47,7 +48,24 @@ def random_scaling(data, max_scale=2):
     return data
 
 
-def random_sampling(data, min_ratio=0.7, max_ratio=0.9):
+def random_fliphorizontal(data, flip_prob=0.3):
+    """
+    对输入的 COCO17 格式数据进行随机左右翻转的数据增强。
+    对每个样本独立地进行翻转操作，翻转的概率由 flip_prob 决定。
+    :param data: 输入数据，形状为 (Y, 2, X, 17)，即 (样本数, [x, y], 帧数, 姿态点数)
+    :param flip_prob: 左右翻转的概率，默认为 0.5
+    :return: 翻转后的数据，形状保持不变
+    """
+    # 对每个样本执行独立的翻转操作
+    for i in range(data.shape[0]):
+        if random.random() < flip_prob:  # 根据概率决定是否对该样本进行翻转
+            # 执行翻转操作：只翻转 x 坐标，y 坐标保持不变
+            data[i, 0, :, :] = -data[i, 0, :, :]
+
+    return data
+
+
+def random_sampling(data, min_ratio=0.6, max_ratio=0.9):
     """
     从输入的 Y * 2 * X * 17 数据矩阵中随机采样一个连续的帧片段。
     :param data: 输入的数据矩阵，形状为 (Y, 2, X, 17)
@@ -66,7 +84,9 @@ def random_sampling(data, min_ratio=0.7, max_ratio=0.9):
         start_frame = random.randint(0, X - sample_length + 1)
         # 提取该区间的数据
         sampled_data_i = data[i, :, start_frame : start_frame + sample_length, :]
-        sampled_data_i = src.utils.interpolate_frames(sampled_data_i.transpose(1, 2, 0), X).transpose(2, 0, 1)
+        sampled_data_i = src.utils.interpolate_frames(
+            sampled_data_i.transpose(1, 2, 0), X
+        ).transpose(2, 0, 1)
         sampled_data.append(sampled_data_i)
 
     return np.asarray(sampled_data)
@@ -77,6 +97,7 @@ def combined_transform(data):
     data = random_rotation(data)
     data = random_scaling(data)
     data = random_translation(data)
+    data = random_fliphorizontal(data)
     # 随机采样片段
     data = random_sampling(data)
     return data

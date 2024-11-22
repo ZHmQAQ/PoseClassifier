@@ -9,7 +9,7 @@ def infer():
     加载视频 转化为关键点坐标图 (暂时略过，直接读取关键点坐标 npy 数据)
     模型处理坐标图 输出分类
     """
-
+    # TODO: 参数化
     model_path = r"model/bestbest/best_model_2.pth"
     data_path = r"dataset/TestData.npy"
 
