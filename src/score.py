@@ -25,7 +25,7 @@ ERROR_LEVEL =  [[10, 20, 30],
 
 ERROR_SCORE = [1.0, 0.8, 0.6, 0.0]
 
-STD_FOLDER = r".\config\score_stddata"
+STD_FOLDER = r"./config/score_stddata"
 
 # 判定模型超参数
 ANGLE_LEVEL_RATIO = 2.86
@@ -200,7 +200,7 @@ def Score(npy, label, conf):
 if __name__ == "__main__":
 
     # video_path = os.path.join(STD_FOLDER, "test_10.npy")
-    video_path = os.path.join(r".\datapro\save\2_08","动作8-5-85.npy")
+    video_path = os.path.join(r"./datapro/save/2_08","动作8-5-85.npy")
     for i in range(14):
         res = Score(npy=video_path, label=i)
         print("label ", i, " - score:", res)
