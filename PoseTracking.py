@@ -17,7 +17,7 @@ def load_model(model_path=r"model/bestbest/best_model_3.pth"):
     # 检查 CUDA 是否可用
     if torch.cuda.is_available():
         device = torch.device("cuda")
-        print("CUDA 可用，使用 GPU 加载模型")
+        print("CUDA 可用，使用  GPU 加载模型")
     else:
         device = torch.device("cpu")
         print("CUDA 不可用，使用 CPU 加载模型")
