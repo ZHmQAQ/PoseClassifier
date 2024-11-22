@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 
 
 class TrainFeeder(Dataset):
-    def __init__(self, data, labels, transform=None):
+    def __init__(self, data, labels, transform=None, augment_factor=4):
         super(TrainFeeder, self).__init__()
         self.data = data.astype(np.float32)
         self.labels = labels.astype(np.int64)
@@ -12,11 +12,12 @@ class TrainFeeder(Dataset):
         # 如果有转换函数且需要数据增强
         if self.transform:
             # 应用数据增强
-            augmented_data = self.transform(np.copy(data))
-            # 格式转换成 f32
-            augmented_data = augmented_data.astype(np.float32)
-            self.data = np.concatenate((self.data, augmented_data), axis=0)
-            self.labels = np.concatenate((self.labels, np.copy(self.labels)), axis=0)
+            for i in range(augment_factor):
+                augmented_data = self.transform(np.copy(data))
+                # 格式转换成 f32
+                augmented_data = augmented_data.astype(np.float32)
+                self.data = np.concatenate((self.data, augmented_data), axis=0)
+                self.labels = np.concatenate((self.labels, np.copy(labels)), axis=0)
 
     def __len__(self):
         return len(self.labels)
